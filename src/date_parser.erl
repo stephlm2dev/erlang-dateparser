@@ -59,8 +59,8 @@ parse(Periode) when ?is_string(Periode) ->
 	{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
 	[Mot, Entier, Type] = tokens(Periode, " "),
 	Duree = list_to_integer(Entier),
-	Month = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet",
-			 "Août","Septembre","Octobre","Novembre","Décembre"],
+	Liste_mois = {"Janvier","Février","Mars","Avril","Mai","Juin","Juillet",
+				 "Août","Septembre","Octobre","Novembre","Décembre"},
 	% when (?is_day(X) orelse ?is_month(X))
 	case Mot of
 		"dans" when ((Type =:= "jours" orelse Type =:= "jour")) ->	%andalso ?is_day(Duree)
@@ -75,7 +75,8 @@ parse(Periode) when ?is_string(Periode) ->
 		"dans" when ((Type =:= "ans" orelse Type =:= "an")) -> 	%andalso is_integer(Duree)
 			{Day, Month, Year + Duree};
 
-		"le"  -> "move";	%when (is_integer(Duree))
+		"le"  when (is_in_Tuple(Liste_mois, Type, 0) =/= 0) -> 	%when (is_integer(Duree)) 
+			{Jour, Mois, Annee} = setelement(3, {Year, Month, Day}, Duree);
 		_ -> "Mauvaise phrase"
 	end;
 
@@ -84,3 +85,14 @@ parse(_) ->
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% verifie si l'element est présent dans le tuple et le cas échéant renvoie sa position
+%is_in_Tuple(Tuple, Word) -> is_in_Tuple(Tuple, Word, 0);
+
+is_in_Tuple(Tuple, Word, N) when N < 13 ->
+	if 
+		(element(N,Tuple) =:= Word) -> N;
+		true -> is_in_Tuple(Tuple, Word, N+1)
+	end;
+
+is_in_Tuple(Tuple, Word, 13) -> 0.
+	
