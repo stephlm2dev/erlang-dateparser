@@ -2,7 +2,7 @@
 -author("Schmidely Stephane").
 -vsn(0.1).
 %-compile([debug_info, export_all]).
--import (string, [tokens/2]).
+-import (string, [tokens/2, concat/2]).
 -export ([parse/1]).
 
 -define(is_num(X),   (X >= $0 andalso X =< $9)).
@@ -62,27 +62,26 @@ parse(Periode) when ?is_string(Periode) ->
 	case Mot of
 		"dans" when (Type =:= "jours" orelse Type =:= "jour") andalso is_integer(Duree) ->	
 			Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
-			Total = 3600*24*Duree + Now_seconds,	%faire modification temps en secondes!
+			Total = 3600*24*Duree + Now_seconds,
 			calendar:gregorian_seconds_to_datetime(Total);
 
-		"dans" when ( Type =:= "mois") -> 	%andalso ?is_month(Duree)
+		"dans" when ( Type =:= "mois") -> 	%andalso ?is_month(Duree) %%%%%%% A CHANGER
 			Total = Duree + Month, 
-			if Total > 12 -> {Year + (Total div 12), Total rem 12, Day};
-			   true -> {Year, Duree + Month, Day}
+			if  Total > 12 -> {Year + (Total div 12), Total rem 12, Day};
+				true -> {Year, Duree + Month, Day}
 			end;
 
-		"dans" when ((Type =:= "ans" orelse Type =:= "an")) -> 	%andalso is_integer(Duree)
+		"dans" when (Type =:= "ans" orelse Type =:= "an") -> 	%andalso is_integer(Duree)
 			{Year + Duree, Month, Day};
 
-		"le" when ?is_day(Duree) -> % si present dans le tuple
+		"le" when ?is_day(Duree) -> % andalso si present dans le tuple
 			Numero_mois = is_in_Tuple(Liste_mois, Type),
 			{Annee, Mois, Jour} = setelement(3, {Year, Numero_mois, Day}, Duree);
-		_ -> "Mauvaise phrase"
+		_ -> "Wrong sentence"
 	end;
 
 parse(_) -> 
 	erreur.
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % verifie si l'element est présent dans le tuple et le cas échéant renvoie sa position
@@ -95,4 +94,29 @@ is_in_Tuple(Tuple, Word, N) when N < 13 ->
 	end;
 
 is_in_Tuple(Tuple, Word, 13) -> 0.
+
+positif(Value) when Value =< 0 -> 
+	if 
+		(Value > 0) -> Value;
+		true -> positif(Value + 12)
+	end;
+
+positif(Value) -> Value.
 	
+%%%%
+%	"il y a" when (Type =:= "jours" orelse Type =:= "jour") andalso is_integer(Duree) ->	
+%		Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+%		Total = Now_seconds - 3600*24*Duree,
+%		calendar:gregorian_seconds_to_datetime(Total);
+%
+%	"il y a" when ( Type =:= "mois") -> 	%andalso ?is_month(Duree)
+%		Total_Annee = Duree + Month, 
+%			Total_Mois = positif(Month - Duree), 
+%			if
+%				Total_Mois =:= 12 -> {Year - (Total_Annee div 12) -1, 12, Day};
+%				Duree > Month -> {Year - (Total_Annee div 12), Total_Mois rem 12, Day};
+%		   		true -> {Year, Month - Duree, Day}
+%		   	end;
+%
+%	"il y a" when (Type =:= "ans" orelse Type =:= "an") -> 	%andalso is_integer(Duree)
+%		{Year - Duree, Month, Day};
