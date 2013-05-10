@@ -1,6 +1,6 @@
 -module (date_parser).
 -author("Schmidely Stephane").
--vsn(0.1).
+-vsn(1.0).
 %-compile([debug_info, export_all]).
 -import (string, [tokens/2, concat/2]).
 -export ([analyser/1]).
@@ -42,7 +42,9 @@ analyser(Date) when ?is_string(Date) ->
 		3 -> 	% dans 2 jours 
 			parse({Mot, Entier, Type} = List_date);
 		5 -> 	% il y a 2 mois
-			parse({_, _, _, Duree, Type} = List_date);
+			{Mot1, Mot2, Mot3, Entier, Type} = List_date,
+			Mot = string:concat(Mot1, string:concat(Mot2, Mot3)),
+			parse({Mot, Entier, Type});
 		_ -> 
 			"Oops! Something went wrong, please try again"
 	end;
@@ -116,13 +118,11 @@ parse({Jour_saisie, Periode}) ->
 	end;
 
 % DANS X TEMPS / LE X MOIS
-parse(Periode) when ?is_string(Periode) ->
+parse({Mot, Entier, Type}) ->
 	{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
-	[Mot, Entier, Type] = tokens(Periode, " "),
 	Duree = list_to_integer(Entier),
-	Liste_mois = {"Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet",
-				 "Aout","Septembre","Octobre","Novembre","Decembre"},
-	% when (?is_day(X) orelse ?is_month(X))
+	Liste_mois = {"janvier","fevrier","mars","avril","mai","juin","juillet",
+				  "aout","septembre","octobre","novembre","decembre"},
 	case Mot of
 		"dans" when (Type =:= "jours" orelse Type =:= "jour") andalso is_integer(Duree) ->	
 			Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
@@ -139,9 +139,28 @@ parse(Periode) when ?is_string(Periode) ->
 		"dans" when (Type =:= "ans" orelse Type =:= "an") -> 	%andalso is_integer(Duree)
 			{Year + Duree, Month, Day};
 
-		"le" when ?is_day(Duree) -> % andalso si present dans le tuple
+		"le" when ?is_day(Duree) ->		% andalso si present dans le tuple
 			Numero_mois = is_in_Tuple(Liste_mois, Type),
 			{Annee, Mois, Jour} = setelement(3, {Year, Numero_mois, Day}, Duree);
+
+		"ilya" when (Type =:= "jours" orelse Type =:= "jour") andalso is_integer(Duree) ->	
+			Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+			Total = Now_seconds - 3600*24*Duree,
+			{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
+			{Annee, Mois, Jour};
+
+		"ilya" when (Type =:= "mois") -> 	% andalso ?is_month(Duree)
+			Total_Annee = Duree + Month, 
+				Total_Mois = positif(Month - Duree), 
+				if
+					Total_Mois =:= 12 -> {Year - (Total_Annee div 12) -1, 12, Day};
+					Duree > Month -> {Year - (Total_Annee div 12), Total_Mois rem 12, Day};
+					true -> {Year, Month - Duree, Day}
+				end;
+
+		"ilya" when (Type =:= "ans" orelse Type =:= "an") -> 	% andalso is_integer(Duree)
+			{Year - Duree, Month, Day};
+
 		_ -> "Oops! Something went wrong, please try again"
 	end;
 
@@ -171,22 +190,3 @@ positif(Value) -> Value.
 
 % converti en minuscule
 % minuscule()
-
-%%%%
-%	"il y a" when (Type =:= "jours" orelse Type =:= "jour") andalso is_integer(Duree) ->	
-%		Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
-%		Total = Now_seconds - 3600*24*Duree,
-%		calendar:gregorian_seconds_to_datetime(Total);
-%
-%	"il y a" when ( Type =:= "mois") -> 	%andalso ?is_month(Duree)
-%		Total_Annee = Duree + Month, 
-%			Total_Mois = positif(Month - Duree), 
-%			if
-%				Total_Mois =:= 12 -> {Year - (Total_Annee div 12) -1, 12, Day};
-%				Duree > Month -> {Year - (Total_Annee div 12), Total_Mois rem 12, Day};
-%		   		true -> {Year, Month - Duree, Day}
-%		   	end;
-%
-%	"il y a" when (Type =:= "ans" orelse Type =:= "an") -> 	%andalso is_integer(Duree)
-%		{Year - Duree, Month, Day};
-
