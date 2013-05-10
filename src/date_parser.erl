@@ -84,12 +84,18 @@ parse(Message = {Jours, "prochains"}) ->
 	Liste_jours = {"lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"},
 	Numero_jours = is_in_Tuple(Liste_jours, Jours),
 	if  Numero_jours =/= 0 -> 
-		{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+		Local_time = {{Year, Month, Day}, {Hour, Minute, Second}} = calendar:local_time(),
+		Now_seconds = calendar:datetime_to_gregorian_seconds(Local_time),
 		Jour_courant = calendar:day_of_the_week(Year, Month, Day),
 		if Numero_jours > Jour_courant -> 
-			{Year, Month, Day + (Numero_jours - Jour_courant)};
-			true -> {Year, Month, Day + (7 rem Jour_courant) + Numero_jours}
-		end;
+%			{Year, Month, Day + (Numero_jours - Jour_courant)};
+			Total_jours = Numero_jours - Jour_courant;
+%			true -> {Year, Month, Day + (7 rem Jour_courant) + Numero_jours}
+			true -> Total_jours = (7 rem Jour_courant) + Numero_jours
+		end,
+		Total_seconds = Total_jours * 24 * 3600 + Now_seconds,
+		{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total_seconds),
+		{Annee, Mois, Jour};
 		true -> "Wrong sentence"
 	end;
 
