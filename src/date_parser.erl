@@ -3,7 +3,7 @@
 -vsn(0.1).
 %-compile([debug_info, export_all]).
 -import (string, [tokens/2, concat/2]).
--export ([parse/1]).
+-export ([analyser/1]).
 
 -define(is_num(X),   (X >= $0 andalso X =< $9)).
 -define(is_year(X),  (is_integer(X) andalso X > 31)).
@@ -23,7 +23,6 @@
 -type date()	 :: {day(),month(),year()}. 		  % ie day/month/year
 -type time()	 :: {hour(),minute(),second()}.		  % ie hour H minute min second seconds
 -type datetime() :: {date(),time()}.				  % ie day/month/year hour H minute min second seconds
--type now()		 :: {integer(),integer(),integer()}.
 
 % Split the string and analyse each part of the elements
 
@@ -32,6 +31,24 @@
 
 functions1() -> date().
 functions2() -> time().
+
+analyser(Date) when ?is_string(Date) ->
+	List_date = list_to_tuple(tokens(Date, " ")),
+	case tuple_size(List_date) of
+		1 ->	% avant-hier
+			parse(List_date);
+		2 -> 	% samedi prochain
+			parse({Jour_saisie, Periode} = List_date);
+		3 -> 	% dans 2 jours 
+			parse({Mot, Entier, Type} = List_date);
+		5 -> 	% il y a 2 mois
+			parse({_, _, _, Duree, Type} = List_date);
+		_ -> 
+			"Oops! Something went wrong, please try again"
+	end;
+
+analyser(_) -> 
+	"Oops! Something went wrong, please try again".
 
 parse([Year, Month, Day]) ->
 	{Day, Month, Year};
@@ -51,7 +68,7 @@ parse("hier") ->
 	{Annee, Mois, Jour};
 		
 parse("aujourd'hui") ->	% probleme a regler avec l'apostrophe
-	{Annee, Mois, Jour}; = date();
+	{Annee, Mois, Jour} = date();
 
 parse("demain") ->
 	Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
@@ -59,13 +76,44 @@ parse("demain") ->
 	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
 	{Annee, Mois, Jour};
 
-parse("après-demain") ->
+parse("apres-demain") ->	% voir comment résoudre le probleme des accents
 	Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
 	Total = Now_seconds + 3600*24*2,
 	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
 	{Annee, Mois, Jour};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+parse({Jour_saisie, Periode}) ->
+	% convertir en minuscule Jour_saisie
+	Liste_jours = {"lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"},
+	Numero_jour = is_in_Tuple(Liste_jours, Jour_saisie),
+	if  Numero_jour =/= 0 -> % si le jour existe
+		Local_time   = {{Year, Month, Day}, {Hour, Minute, Second}} = calendar:local_time(),
+		Now_seconds  = calendar:datetime_to_gregorian_seconds(Local_time),
+		Jour_courant = calendar:day_of_the_week(Year, Month, Day),
+		case Periode of
+			"prochain" ->
+				if Numero_jour > Jour_courant -> 
+					Total_jours = Numero_jour - Jour_courant;
+					true -> Total_jours = (7 rem Jour_courant) + Numero_jour
+				end,
+				Total_seconds = Now_seconds + (Total_jours * 24 * 3600),
+				{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total_seconds),
+				{Annee, Mois, Jour};
+			"dernier" ->
+				if Numero_jour < Jour_courant -> 
+					Total_jours = Jour_courant - Numero_jour;
+					true -> Total_jours = (7 rem Numero_jour) + Jour_courant
+				end,
+				Total_seconds = Now_seconds - (Total_jours * 24 * 3600),
+				{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total_seconds),
+				{Annee, Mois, Jour};
+			_ -> 
+				"Oops! Something went wrong, please try again"
+		end;
+		true -> "Oops! Something went wrong, please try again"
+	end;
 
 % DANS X TEMPS / LE X MOIS
 parse(Periode) when ?is_string(Periode) ->
@@ -94,28 +142,11 @@ parse(Periode) when ?is_string(Periode) ->
 		"le" when ?is_day(Duree) -> % andalso si present dans le tuple
 			Numero_mois = is_in_Tuple(Liste_mois, Type),
 			{Annee, Mois, Jour} = setelement(3, {Year, Numero_mois, Day}, Duree);
-		_ -> "Wrong sentence"
-	end;
-
-parse(Message = {Jours, "prochains"}) ->
-	Liste_jours = {"lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"},
-	Numero_jours = is_in_Tuple(Liste_jours, Jours),
-	if  Numero_jours =/= 0 -> 
-		Local_time   = {{Year, Month, Day}, {Hour, Minute, Second}} = calendar:local_time(),
-		Now_seconds  = calendar:datetime_to_gregorian_seconds(Local_time),
-		Jour_courant = calendar:day_of_the_week(Year, Month, Day),
-		if Numero_jours > Jour_courant -> 
-			Total_jours = Numero_jours - Jour_courant;
-			true -> Total_jours = (7 rem Jour_courant) + Numero_jours
-		end,
-		Total_seconds = Total_jours * 24 * 3600 + Now_seconds,
-		{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total_seconds),
-		{Annee, Mois, Jour};
-		true -> "Wrong sentence"
+		_ -> "Oops! Something went wrong, please try again"
 	end;
 
 parse(_) -> 
-	erreur.
+	"Oops! Something went wrong, please try again".
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % verifie si l'element est présent dans le tuple et le cas échéant renvoie sa position
@@ -129,6 +160,7 @@ is_in_Tuple(Tuple, Word, N) when N < 13 ->
 
 is_in_Tuple(Tuple, Word, 13) -> 0.
 
+% converti une valeur négative en positive
 positif(Value) when Value =< 0 -> 
 	if 
 		(Value > 0) -> Value;
@@ -136,7 +168,10 @@ positif(Value) when Value =< 0 ->
 	end;
 
 positif(Value) -> Value.
-	
+
+% converti en minuscule
+% minuscule()
+
 %%%%
 %	"il y a" when (Type =:= "jours" orelse Type =:= "jour") andalso is_integer(Duree) ->	
 %		Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),

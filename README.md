@@ -8,4 +8,4 @@ Gère actuellement :
 - dans X jours/mois/ans
 - le X mois
 - jours prochains
-
+- avant-hier, hier, aujourd'hui, demain, après-demain
