@@ -80,6 +80,19 @@ parse(Periode) when ?is_string(Periode) ->
 		_ -> "Wrong sentence"
 	end;
 
+parse(Message = {Jours, "prochains"}) ->
+	Liste_jours = {"lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"},
+	Numero_jours = is_in_Tuple(Liste_jours, Jours),
+	if  Numero_jours =/= 0 -> 
+		{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+		Jour_courant = calendar:day_of_the_week(Year, Month, Day),
+		if Numero_jours > Jour_courant -> 
+			{Year, Month, Day + (Numero_jours - Jour_courant)};
+			true -> {Year, Month, Day + (7 rem Jour_courant) + Numero_jours}
+		end;
+		true -> "Wrong sentence"
+	end;
+
 parse(_) -> 
 	erreur.
 
@@ -120,3 +133,4 @@ positif(Value) -> Value.
 %
 %	"il y a" when (Type =:= "ans" orelse Type =:= "an") -> 	%andalso is_integer(Duree)
 %		{Year - Duree, Month, Day};
+
