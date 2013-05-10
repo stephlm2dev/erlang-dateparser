@@ -37,17 +37,33 @@ parse([Year, Month, Day]) ->
 	{Day, Month, Year};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% HIER, AUJOURD'HUI, DEMAIN
-parse(hier) ->
-	Current_date = date(),
-	{Year, Month, Day} = setelement(3, Current_date, element(3,Current_date) - 1);
-		
-parse(aujourdhui) ->	% probleme a regler avec l'apostrophe
-	{Year, Month, Day} = date();
+% AVANT-HIER, HIER, AUJOURD'HUI, APRES-DEMAIN
+parse("avant-hier") ->
+	Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+	Total = Now_seconds - 3600*24*2 ,
+	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
+	{Annee, Mois, Jour};
 
-parse(demain) ->
-	Current_date = date(),
-	{Year, Month, Day} = setelement(3, Current_date, element(3,Current_date) + 1);
+parse("hier") ->
+	Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+	Total = Now_seconds - 3600*24,
+	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
+	{Annee, Mois, Jour};
+		
+parse("aujourd'hui") ->	% probleme a regler avec l'apostrophe
+	{Annee, Mois, Jour}; = date();
+
+parse("demain") ->
+	Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+	Total = Now_seconds + 3600*24,
+	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
+	{Annee, Mois, Jour};
+
+parse("après-demain") ->
+	Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+	Total = Now_seconds + 3600*24*2,
+	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
+	{Annee, Mois, Jour};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -63,7 +79,8 @@ parse(Periode) when ?is_string(Periode) ->
 		"dans" when (Type =:= "jours" orelse Type =:= "jour") andalso is_integer(Duree) ->	
 			Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
 			Total = 3600*24*Duree + Now_seconds,
-			calendar:gregorian_seconds_to_datetime(Total);
+			{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
+			{Annee, Mois, Jour};
 
 		"dans" when ( Type =:= "mois") -> 	%andalso ?is_month(Duree) %%%%%%% A CHANGER
 			Total = Duree + Month, 
@@ -84,13 +101,11 @@ parse(Message = {Jours, "prochains"}) ->
 	Liste_jours = {"lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"},
 	Numero_jours = is_in_Tuple(Liste_jours, Jours),
 	if  Numero_jours =/= 0 -> 
-		Local_time = {{Year, Month, Day}, {Hour, Minute, Second}} = calendar:local_time(),
-		Now_seconds = calendar:datetime_to_gregorian_seconds(Local_time),
+		Local_time   = {{Year, Month, Day}, {Hour, Minute, Second}} = calendar:local_time(),
+		Now_seconds  = calendar:datetime_to_gregorian_seconds(Local_time),
 		Jour_courant = calendar:day_of_the_week(Year, Month, Day),
 		if Numero_jours > Jour_courant -> 
-%			{Year, Month, Day + (Numero_jours - Jour_courant)};
 			Total_jours = Numero_jours - Jour_courant;
-%			true -> {Year, Month, Day + (7 rem Jour_courant) + Numero_jours}
 			true -> Total_jours = (7 rem Jour_courant) + Numero_jours
 		end,
 		Total_seconds = Total_jours * 24 * 3600 + Now_seconds,
