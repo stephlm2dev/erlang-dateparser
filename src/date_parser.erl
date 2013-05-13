@@ -257,8 +257,7 @@ parse(_) ->
 is_in_Tuple(Tuple, Word) -> is_in_Tuple(Tuple, Word, 0).
 
 is_in_Tuple(Tuple, Word, N) when N < 13 ->
-	if 
-		(element(N,Tuple) =:= Word) -> N;
+	if  (element(N,Tuple) =:= Word) -> N;
 		true -> is_in_Tuple(Tuple, Word, N+1)
 	end;
 
