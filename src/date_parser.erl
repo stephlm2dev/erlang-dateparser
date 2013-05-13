@@ -74,6 +74,21 @@ parse("apres-demain") ->	% voir comment résoudre le probleme des accents
 	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
 	{Annee, Mois, Jour};
 
+parse(Jour_saisie) when ?is_string(Jour_saisie) -> 
+	Liste_jours = {"lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi",
+				   "dimanche"},
+	Numero_jour = is_in_Tuple(Liste_jours, Jour_saisie),
+	if  Numero_jour =/= 0 -> % si le jour existe
+			Local_time   = {{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+			Now_seconds  = calendar:datetime_to_gregorian_seconds(Local_time),
+			Jour_courant = calendar:day_of_the_week(Year, Month, Day),
+			Total_jours = Numero_jour - Jour_courant, 
+			Total_seconds = Now_seconds + (Total_jours * 24 * 3600),
+			{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total_seconds),
+			{Annee, Mois, Jour};
+		true -> "Oops! Something went wrong, please try again"
+	end;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % WEEK-END PROCHAIN
