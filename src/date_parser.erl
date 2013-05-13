@@ -76,6 +76,25 @@ parse("apres-demain") ->	% voir comment résoudre le probleme des accents
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% WEEK-END PROCHAIN
+parse({"week-end", "prochain"}) -> 
+	parse({"samedi", "prochain"});
+
+% SEMAINE PROCHAINE
+parse({"semaine", "prochaine"}) -> 
+	Local_time    = {{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+	Now_seconds   = calendar:datetime_to_gregorian_seconds(Local_time),
+	Jour_courant  = calendar:day_of_the_week(Year, Month, Day),
+	Fin_semaine   = (7 - Jour_courant) + 1,
+	Total_seconds = Now_seconds + (Fin_semaine * 24 * 3600),
+	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total_seconds),
+	{Annee, Mois, Jour};
+
+% L'ANNEE PROCHAINE
+parse({"l'annee", "prochaine"}) -> 
+	{{Year,_,_}, {_,_,_}} = calendar:local_time(),
+	{Year + 1, 1, 1};
+
 % JOUR PROCHAIN
 parse({Jour_saisie, "prochain"}) ->
 	Liste_jours = {"lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi",
@@ -94,6 +113,25 @@ parse({Jour_saisie, "prochain"}) ->
 			{Annee, Mois, Jour};
 		true -> "Oops! Something went wrong, please try again"
 	end;
+
+% WEEK-END DERNIERE
+parse({"week-end", "dernier"}) -> 
+	parse({"samedi", "dernier"});
+
+% SEMAINE DERNIERE
+parse({"semaine", "derniere"}) -> 
+	Local_time    = {{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+	Now_seconds   = calendar:datetime_to_gregorian_seconds(Local_time),
+	Jour_courant  = calendar:day_of_the_week(Year, Month, Day),
+	Fin_semaine   = 7 + (Jour_courant - 1) ,
+	Total_seconds = Now_seconds - (Fin_semaine * 24 * 3600),
+	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total_seconds),
+	{Annee, Mois, Jour};
+
+% L'ANNEE DERNIERE
+parse({"l'annee", "derniere"}) -> 
+	{{Year,_,_}, {_,_,_}} = calendar:local_time(),
+	{Year - 1, 1, 1};
 
 % JOUR DERNIER
 parse({Jour_saisie, "dernier"}) ->

@@ -9,8 +9,12 @@ Gère actuellement :
 - le X mois
 - JOUR prochain/dernier
 - avant-hier, hier, aujourd'hui, demain, après-demain
+- semaine prochaine/derniere
+- week-end prochain/dernier
+- l'annee prochaine/dernière
+- JOUR 
 
 ### Utilisation 
 
-1> c(date_parser).
+1> c(date_parser).   
 2> date_parser("dans 5 jours").
