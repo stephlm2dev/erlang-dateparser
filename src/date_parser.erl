@@ -6,9 +6,10 @@
 -export ([analyser/1]).
 
 -define(is_num(X),   (X >= $0 andalso X =< $9)).
--define(is_year(X),  (is_integer(X) andalso X > 31)).
--define(is_day(X),   (is_integer(X) andalso X =< 31)).
--define(is_month(X), (is_integer(X) andalso X =< 12)).
+-define(is_positif(X), (X > 0)).
+-define(is_year(X),  (?is_positif(X) andalso X > 31)).
+-define(is_day(X),   (?is_positif(X) andalso X =< 31)).
+-define(is_month(X), (?is_positif(X) andalso X =< 12)).
 -define(is_string(X),(is_list(X))).
 -define(GREGORIAN_SECONDS_1970, 62167219200).
 
@@ -117,69 +118,132 @@ parse({Jour_saisie, "dernier"}) ->
 
 % LE X MOIS
 parse({"le", Entier, Type }) ->
-	{{Year,_, Day}, {_,_,_}} = calendar:local_time(),
 	Liste_mois = {"janvier","fevrier","mars","avril","mai","juin","juillet",
 				  "aout","septembre","octobre","novembre","decembre"},
 	Numero_mois = is_in_Tuple(Liste_mois, Type),
 	if (Numero_mois == 0) -> "Oops! Something went wrong, please try again";
-		true -> setelement(3, {Year, Numero_mois, Day}, list_to_integer(Entier))
+		true -> 
+			try list_to_integer(Entier) of
+				_ -> 
+					Duree = list_to_integer(Entier),
+					if (?is_day(Duree)) -> 
+						{{Year,_, Day}, {_,_,_}} = calendar:local_time(),
+						setelement(3, {Year, Numero_mois, Day}, Duree);
+						true -> "Oops! Something went wrong, please try again"
+					end
+			catch
+				error:badarg->
+					"Oops! Something went wrong, please try again"
+			end
 	end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % DANS X JOUR(S) 
 parse({"dans", Entier, Type}) when (Type =:= "jours" orelse Type =:= "jour") ->
-	% andalso is_integer(list_to_integer(Entier)) 
-	Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
-	Total = 3600*24* list_to_integer(Entier) + Now_seconds,
-	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
-	{Annee, Mois, Jour};
+	try list_to_integer(Entier) of
+		_ -> 
+			Duree = list_to_integer(Entier),
+			if (?is_positif(Duree)) -> 
+				Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+				Total = 3600*24*Duree + Now_seconds,
+				{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
+				{Annee, Mois, Jour};
+				true -> "Oops! Something went wrong, please try again"
+			end
+	catch
+		error:badarg->
+			"Oops! Something went wrong, please try again"
+	end;	
 
 % DANS X MOIS
 parse({"dans", Entier, "mois"})  -> 
-	% is_integer(list_to_integer(Entier))
-	{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
-	Duree = list_to_integer(Entier),	% TRY _ CATCH
-	Total = Duree + Month, 
-	if  Total > 12 -> {Year + (Total div 12), Total rem 12, Day};
-		true -> {Year, Duree + Month, Day}
+	try list_to_integer(Entier) of
+		_ -> 
+			Duree = list_to_integer(Entier),
+			if (?is_positif(Duree)) ->
+				{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+				Total = Duree + Month, 
+				if  Total > 12 -> {Year + (Total div 12), Total rem 12, Day};
+					true -> {Year, Duree + Month, Day}
+				end;
+				true -> "Oops! Something went wrong, please try again"
+			end
+	catch
+		error:badarg->
+			"Oops! Something went wrong, please try again"
 	end;
 
 % DANS X AN(S)
 parse({"dans", Entier, Type}) when (Type =:= "ans" orelse Type =:= "an") ->
-	% andalso is_integer(list_to_integer(Entier)) 
-	{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
-	{Year + list_to_integer(Entier), Month, Day};
-
+	try list_to_integer(Entier) of
+		_ -> 
+			Duree = list_to_integer(Entier),
+			if (?is_positif(Duree)) ->
+				{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+				{Year + Duree, Month, Day};
+				true -> "Oops! Something went wrong, please try again"
+			end
+	catch
+		error:badarg->
+			"Oops! Something went wrong, please try again"
+	end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % IL Y A X JOUR(S)
 parse({"ilya", Entier, Type}) when (Type =:= "jours" orelse Type =:= "jour") ->
-	% andalso is_integer(list_to_integer(Entier)) 
-	Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
-	Total = Now_seconds - 3600 * 24 * list_to_integer(Entier),
-	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
-	{Annee, Mois, Jour};
+	try list_to_integer(Entier) of
+		_ -> 
+			Duree = list_to_integer(Entier),
+			if (?is_positif(Duree)) ->
+				Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+				Total = Now_seconds - 3600 * 24 * Duree,
+				{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
+				{Annee, Mois, Jour};
+				true -> "Oops! Something went wrong, please try again"
+			end
+	catch
+		error:badarg->
+			"Oops! Something went wrong, please try again"
+	end;
 
 % IL Y A X MOIS
 parse({"ilya", Entier, "mois"})  -> 
-	% is_integer(list_to_integer(Entier))
-	{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
-	Duree = list_to_integer(Entier),
-	Total_Annee = Duree + Month, 
-	Total_Mois = positif(Month - Duree), 
-	if
-		Total_Mois =:= 12 -> {Year - (Total_Annee div 12) -1, 12, Day};
-		Duree > Month -> {Year - (Total_Annee div 12), Total_Mois rem 12, Day};
-		true -> {Year, Month - Duree, Day}
+	try list_to_integer(Entier) of
+		_ -> 
+			Duree = list_to_integer(Entier),
+			if (?is_positif(Duree)) ->
+				{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+				Total_Annee = Duree + Month, 
+				Total_Mois = positif(Month - Duree), 
+				if
+					Total_Mois =:= 12 -> {Year - (Total_Annee div 12) -1, 12, Day};
+					Duree > Month -> {Year - (Total_Annee div 12), Total_Mois rem 12, Day};
+					true -> {Year, Month - Duree, Day}
+				end;
+				
+				true -> "Oops! Something went wrong, please try again"
+			end
+	catch
+		error:badarg->
+			"Oops! Something went wrong, please try again"
 	end;
 
 % IL Y A X AN(S)
 parse({"ilya", Entier, Type}) when (Type =:= "ans" orelse Type =:= "an") ->
-	% andalso is_integer(list_to_integer(Entier)) 
-	{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
-	{Year - list_to_integer(Entier) , Month, Day};
+	try list_to_integer(Entier) of
+		_ -> 
+			Duree = list_to_integer(Entier),
+			if (?is_positif(Duree)) ->
+				{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+				{Year - Duree, Month, Day};
+				true -> "Oops! Something went wrong, please try again"
+			end
+	catch
+		error:badarg->
+			"Oops! Something went wrong, please try again"
+	end;
 
 parse(_) -> 
 	"Oops! Something went wrong, please try again".
