@@ -2,7 +2,7 @@
 -author("Schmidely Stephane").
 -vsn(1.0).
 %-compile([debug_info, export_all]).
--import (string, [tokens/2, concat/2]).
+-import (string, [tokens/2, concat/2, to_lower/1]).
 -export ([analyser/1]).
 
 -define(is_num(X),   (X >= $0 andalso X =< $9)).
@@ -36,15 +36,18 @@ analyser(Date) when ?is_string(Date) ->
 	List_date = list_to_tuple(tokens(Date, " ")),
 	case tuple_size(List_date) of
 		1 ->	% avant-hier
-			parse(List_date);
+			{Jour_saisie} = List_date,
+			parse(string:to_lower(Jour_saisie));
 		2 -> 	% samedi prochain
-			parse({Jour_saisie, Periode} = List_date);
+			{Jour_saisie, Periode} = List_date,
+			parse({string:to_lower(Jour_saisie), string:to_lower(Periode)});
 		3 -> 	% dans 2 jours 
-			parse({Mot, Entier, Type} = List_date);
+			{Mot, Entier, Type} = List_date,
+			parse({string:to_lower(Mot), string:to_lower(Entier), string:to_lower(Type)});
 		5 -> 	% il y a 2 mois
 			{Mot1, Mot2, Mot3, Entier, Type} = List_date,
 			Mot = string:concat(Mot1, string:concat(Mot2, Mot3)),
-			parse({Mot, Entier, Type});
+			parse({string:to_lower(Mot), string:to_lower(Entier), string:to_lower(Type)});
 		_ -> 
 			"Oops! Something went wrong, please try again"
 	end;
@@ -188,5 +191,4 @@ positif(Value) when Value =< 0 ->
 
 positif(Value) -> Value.
 
-% converti en minuscule
-% minuscule()
+% string:to_lower(String)
