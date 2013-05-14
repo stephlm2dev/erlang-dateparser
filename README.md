@@ -14,18 +14,18 @@ Gère actuellement :
 - l'annee prochaine/dernière
 - JOUR 
 
-# How it works
-## Compilation
+## How it works
+### Compilation
 1> c(date_parser).
-## Requête
+### Requête
 2> date_parser:analyser("your_search_between_quotes").
-## Valeur de retour 
+### Valeur de retour 
 {Annee, Mois, Jour}
 
 ## Exemple d'utilisation 
 
 1> c(date_parser).   
 2> date_parser:analyser("dans 5 jours").   
-{2013, 5, 19}
-3> 
+{2013, 5, 19}   
+3>   
 

@@ -68,7 +68,7 @@ parse("demain") ->
 	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
 	{Annee, Mois, Jour};
 
-parse("apres-demain") ->	% voir comment résoudre le probleme des accents
+parse("apres-demain") ->
 	Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
 	Total = Now_seconds + 3600*24*2,
 	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
@@ -90,44 +90,6 @@ parse(Jour_saisie) when ?is_string(Jour_saisie) ->
 	end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% WEEK-END PROCHAIN
-parse({"week-end", "prochain"}) -> 
-	parse({"samedi", "prochain"});
-
-% SEMAINE PROCHAINE
-parse({"semaine", "prochaine"}) -> 
-	Local_time    = {{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
-	Now_seconds   = calendar:datetime_to_gregorian_seconds(Local_time),
-	Jour_courant  = calendar:day_of_the_week(Year, Month, Day),
-	Fin_semaine   = (7 - Jour_courant) + 1,
-	Total_seconds = Now_seconds + (Fin_semaine * 24 * 3600),
-	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total_seconds),
-	{Annee, Mois, Jour};
-
-% L'ANNEE PROCHAINE
-parse({"l'annee", "prochaine"}) -> 
-	{{Year,_,_}, {_,_,_}} = calendar:local_time(),
-	{Year + 1, 1, 1};
-
-% JOUR PROCHAIN
-parse({Jour_saisie, "prochain"}) ->
-	Liste_jours = {"lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi",
-				   "dimanche"},
-	Numero_jour = is_in_Tuple(Liste_jours, Jour_saisie),
-	if  Numero_jour =/= 0 -> % si le jour existe
-			Local_time   = {{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
-			Now_seconds  = calendar:datetime_to_gregorian_seconds(Local_time),
-			Jour_courant = calendar:day_of_the_week(Year, Month, Day),
-			if Numero_jour > Jour_courant -> 
-				Total_jours = Numero_jour - Jour_courant;
-				true -> Total_jours = (7 rem Jour_courant) + Numero_jour
-			end,
-			Total_seconds = Now_seconds + (Total_jours * 24 * 3600),
-			{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total_seconds),
-			{Annee, Mois, Jour};
-		true -> "Oops! Something went wrong, please try again"
-	end;
 
 % WEEK-END DERNIERE
 parse({"week-end", "dernier"}) -> 
@@ -159,9 +121,47 @@ parse({Jour_saisie, "dernier"}) ->
 			Jour_courant = calendar:day_of_the_week(Year, Month, Day),
 			if Numero_jour < Jour_courant -> 
 				Total_jours = Jour_courant - Numero_jour;
-				true -> Total_jours = (7 rem Numero_jour) + Jour_courant
+				true -> Total_jours = (7 - Numero_jour) + Jour_courant
 			end,
 			Total_seconds = Now_seconds - (Total_jours * 24 * 3600),
+			{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total_seconds),
+			{Annee, Mois, Jour};
+		true -> "Oops! Something went wrong, please try again"
+	end;
+
+% WEEK-END PROCHAIN
+parse({"week-end", "prochain"}) -> 
+	parse({"samedi", "prochain"});
+
+% SEMAINE PROCHAINE
+parse({"semaine", "prochaine"}) -> 
+	Local_time    = {{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+	Now_seconds   = calendar:datetime_to_gregorian_seconds(Local_time),
+	Jour_courant  = calendar:day_of_the_week(Year, Month, Day),
+	Fin_semaine   = (7 - Jour_courant) + 1,
+	Total_seconds = Now_seconds + (Fin_semaine * 24 * 3600),
+	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total_seconds),
+	{Annee, Mois, Jour};
+
+% L'ANNEE PROCHAINE
+parse({"l'annee", "prochaine"}) -> 
+	{{Year,_,_}, {_,_,_}} = calendar:local_time(),
+	{Year + 1, 1, 1};
+
+% JOUR PROCHAIN
+parse({Jour_saisie, "prochain"}) ->
+	Liste_jours = {"lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi",
+				   "dimanche"},
+	Numero_jour = is_in_Tuple(Liste_jours, Jour_saisie),
+	if  Numero_jour =/= 0 -> % si le jour existe
+			Local_time   = {{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+			Now_seconds  = calendar:datetime_to_gregorian_seconds(Local_time),
+			Jour_courant = calendar:day_of_the_week(Year, Month, Day),
+			if Numero_jour > Jour_courant -> 
+				Total_jours = Numero_jour - Jour_courant;
+				true -> Total_jours = (7 - Jour_courant) + Numero_jour
+			end,
+			Total_seconds = Now_seconds + (Total_jours * 24 * 3600),
 			{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total_seconds),
 			{Annee, Mois, Jour};
 		true -> "Oops! Something went wrong, please try again"
@@ -170,7 +170,7 @@ parse({Jour_saisie, "dernier"}) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % LE X MOIS
-parse({"le", Entier, Type }) ->
+parse({"le", Entier, Type}) ->
 	Liste_mois = {"janvier","fevrier","mars","avril","mai","juin","juillet",
 				  "aout","septembre","octobre","novembre","decembre"},
 	Numero_mois = is_in_Tuple(Liste_mois, Type),
@@ -179,8 +179,9 @@ parse({"le", Entier, Type }) ->
 			try list_to_integer(Entier) of
 				_ -> 
 					Duree = list_to_integer(Entier),
-					if (?is_day(Duree)) -> 
-						{{Year,_, Day}, {_,_,_}} = calendar:local_time(),
+					{{Year,_, Day}, {_,_,_}} = calendar:local_time(),
+					LastDay_month = calendar:last_day_of_the_month(Year, Numero_mois),
+					if (Duree < LastDay_month + 1) -> 
 						setelement(3, {Year, Numero_mois, Day}, Duree);
 						true -> "Oops! Something went wrong, please try again"
 					end
@@ -324,3 +325,10 @@ positif(Value) when Value =< 0 ->
 	end;
 
 positif(Value) -> Value.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%							BUGS CONNNUS  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Problème encodage -> regex sur les mois ou normalisation en amont
+% implémenter 11 Mars 2013 
