@@ -3,7 +3,6 @@
 -author("Schmidely Stephane").
 -vsn(1.0).
 -import (date_parser, [analyser/1]).
-%-export ([parse_test/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %							TESTS UNITAIRES

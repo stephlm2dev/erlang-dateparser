@@ -10,7 +10,6 @@
 -define(is_day(X),   (?is_positif(X) andalso X =< 31)).
 -define(is_month(X), (?is_positif(X) andalso X =< 12)).
 -define(is_string(X),(is_list(X))).
--define(GREGORIAN_SECONDS_1970, 62167219200).
 
 % @Brief Split the string and analyse each part of the elements
 % @Param query string
