@@ -1,7 +1,6 @@
 -module (date_parser).
 -author("Schmidely Stephane").
 -vsn(1.0).
-%-compile([debug_info, export_all]).
 -import (string, [tokens/2, concat/2, to_lower/1]).
 -export ([analyser/1]).
 
@@ -13,7 +12,9 @@
 -define(is_string(X),(is_list(X))).
 -define(GREGORIAN_SECONDS_1970, 62167219200).
 
-% Split the string and analyse each part of the elements
+% @Brief Split the string and analyse each part of the elements
+% @Param query string
+% @Return a tuple {Year, Month, Day}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %							FONCTION PRINCIPALE
@@ -222,7 +223,7 @@ parse({"dans", Entier, Type}) when (Type =:= "jours" orelse Type =:= "jour") ->
 	end;	
 
 % DANS X MOIS
-parse({"dans", Entier, "mois"})  -> 
+parse({"dans", Entier, "mois"}) -> 
 	try list_to_integer(Entier) of
 		_ -> 
 			Duree = list_to_integer(Entier),
