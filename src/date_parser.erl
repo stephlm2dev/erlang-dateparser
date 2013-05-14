@@ -30,7 +30,18 @@ analyser(Date) when ?is_string(Date) ->
 			parse({string:to_lower(Jour_saisie), string:to_lower(Periode)});
 		3 -> 	% dans 2 jours // 12 Mai 2012 
 			{Mot, Entier, Type} = List_date,
-			parse({string:to_lower(Mot), string:to_lower(Entier), string:to_lower(Type)});
+			try list_to_integer(Mot) of
+				_ -> 
+					try list_to_integer(Type) of
+						_ -> parse({list_to_integer(Mot), string:to_lower(Entier), list_to_integer(Type)})
+					catch
+						error:badarg -> 
+							"Oops! Something went wrong, please try again"
+					end
+			catch
+				error:badarg ->
+					parse({string:to_lower(Mot), string:to_lower(Entier), string:to_lower(Type)})
+			end;
 		5 -> 	% il y a 2 mois
 			{Mot1, Mot2, Mot3, Entier, Type} = List_date,
 			Mot = string:concat(Mot1, string:concat(Mot2, Mot3)),
@@ -299,6 +310,19 @@ parse({"ilya", Entier, Type}) when (Type =:= "ans" orelse Type =:= "an") ->
 			"Oops! Something went wrong, please try again"
 	end;
 
+parse({Mot, Entier, Type}) when ?is_day(Mot) andalso ?is_year(Type) ->
+	Liste_mois = {"janvier","fevrier","mars","avril","mai","juin","juillet",
+				  "aout","septembre","octobre","novembre","decembre"},
+	Numero_mois = is_in_Tuple(Liste_mois, Entier),
+	if (Numero_mois =/= 0) -> 
+		LastDay_month = calendar:last_day_of_the_month(Type, Numero_mois),
+		if (Mot < LastDay_month + 1) -> 
+			{Type, Numero_mois, Mot};
+			true -> "Oops! Something went wrong, please try again"
+		end;
+		true -> "Oops! Something went wrong, please try again"
+	end;
+
 parse(_) -> 
 	"Oops! Something went wrong, please try again".
 
@@ -331,4 +355,3 @@ positif(Value) -> Value.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Problème encodage -> regex sur les mois ou normalisation en amont
-% implémenter 11 Mars 2013 

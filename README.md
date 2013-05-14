@@ -13,6 +13,7 @@ Gère actuellement :
 - week-end prochain/dernier
 - l'annee prochaine/dernière
 - JOUR 
+- JOUR MOIS ANNEE
 
 ## How it works
 ### Compilation
