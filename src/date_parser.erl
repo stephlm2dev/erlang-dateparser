@@ -12,9 +12,9 @@
 				  "aout","septembre","octobre","novembre","decembre"}).
 
 -ifdef(TEST).
-	get_time() -> {{2013, 5, 14}, {0,0,0}}.
+	get_time() -> {{2013, 5, 14}, {0,0,0}}. % pour les tests unitaires
 -else.
-	get_time() -> calendar:local_time().
+	get_time() -> calendar:local_time(). 	% pour le programme général
 -endif.
 
 % @Brief Split the string and analyse each part of the elements
