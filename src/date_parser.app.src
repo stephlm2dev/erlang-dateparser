@@ -8,8 +8,4 @@
                  ]},
   {mod, { date_parser, []}},
   {env, []}
-<<<<<<< HEAD
  ]}.
-=======
- ]}.
->>>>>>> 2849fd80b0608bddb4cdcc3a82b4e5aca6d5cbca
