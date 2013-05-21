@@ -1,7 +1,10 @@
 -module (date_parser).
 -author("Schmidely Stephane").
 -vsn(1.0).
--import (string, [tokens/2, concat/2, to_lower/1]).
+
+-export([start/2, stop/1]).
+-behaviour (application).
+
 -export ([analyser/1]).
 
 -define(is_num(X),   (X >= $0 andalso X =< $9)).
@@ -19,8 +22,11 @@
 %							FONCTION PRINCIPALE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+start(_StartType, _StartArgs) -> ok.
+stop(_State)-> ok.
+
 analyser(Date) when ?is_string(Date) ->
-	List_date = list_to_tuple(tokens(Date, " ")),
+	List_date = list_to_tuple(string:tokens(Date, " ")),
 	case tuple_size(List_date) of
 		1 ->	% avant-hier
 			{Jour_saisie} = List_date,
