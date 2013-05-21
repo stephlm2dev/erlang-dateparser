@@ -10,11 +10,11 @@
 
 parse_test() -> 
 	[
-		{"Avant-hier",		 ?assert({2013,5,12}  =:= date_parser:analyser("avant-hier"))}, 
-		{"Hier",	  		 ?assert({2013,5,13}  =:= date_parser:analyser("hier"))},
-		{"Aujourd'hui",		 ?assert(date()       =:= date_parser:analyser("aujourd'hui"))},
-		{"Demain",			 ?assert({2013,5,15}  =:= date_parser:analyser("demain"))},
-		{"Apres-demain",	 ?assert({2013,5,16}  =:= date_parser:analyser("apres-demain"))},
+		{"Avant-hier",		 ?assert({2013,5,12}  =:= date_parser:analyser("Avant-hier"))}, 
+		{"Hier",	  		 ?assert({2013,5,13}  =:= date_parser:analyser("Hier"))},
+		{"Aujourd'hui",		 ?assert({2013,5,14}  =:= date_parser:analyser("Aujourd'hui"))},
+		{"Demain",			 ?assert({2013,5,15}  =:= date_parser:analyser("Demain"))},
+		{"Apres-demain",	 ?assert({2013,5,16}  =:= date_parser:analyser("Apres-demain"))},
 		{"LuNdi",			 ?assert({2013,5,13}  =:= date_parser:analyser("LuNdi"))},
 		{"Mardi",			 ?assert({2013,5,14}  =:= date_parser:analyser("mardi"))},
 		{"MERCREDI",		 ?assert({2013,5,15}  =:= date_parser:analyser("MERCREDI"))},
@@ -52,3 +52,5 @@ parse_test() ->
 		{"20 Janvier 2012",	 ?assert({2012,1,20}  =:= date_parser:analyser("20 Janvier 2012"))},
 		{"31 DecEmBre 2014", ?assert({2014,12,31} =:= date_parser:analyser("31 DecEmBre 2014"))}
 	].
+
+toto_test() -> date_parser:analyser("Aujourd'hui").

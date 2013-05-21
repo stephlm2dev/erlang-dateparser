@@ -1,0 +1,11 @@
+{application, date_parser,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  stdlib
+                 ]},
+  {mod, { date_parser, []}},
+  {env, []}
+ ]}.

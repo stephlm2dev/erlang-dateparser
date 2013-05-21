@@ -2,12 +2,20 @@
 -author("Schmidely Stephane").
 -vsn(1.0).
 -export ([analyser/1]).
+-export([start/2, stop/1]).
+-behaviour (application).
 
 -define(is_positif(X), (is_integer(X) andalso X > 0)).
 -define(Liste_jours, {"lundi", "mardi", "mercredi", "jeudi",
 					   "vendredi", "samedi","dimanche"}).
 -define(Liste_mois, {"janvier","fevrier","mars","avril","mai","juin","juillet",
 				  "aout","septembre","octobre","novembre","decembre"}).
+
+-ifdef(TEST).
+	get_time() -> {{2013, 5, 14}, {0,0,0}}.
+-else.
+	get_time() -> calendar:local_time().
+-endif.
 
 % @Brief Split the string and analyse each part of the elements
 % @Param query string
@@ -16,6 +24,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %							FONCTION PRINCIPALE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+start(_StartType, _StartArgs) -> ok.
+stop(_State)-> ok.
 
 analyser(Date) when is_list(Date) ->
 	List_date = list_to_tuple(string:tokens(Date, " ")),
@@ -57,13 +68,13 @@ analyser(_) ->
 
 % AVANT-HIER, HIER, AUJOURD'HUI, DEMAIN, APRES-DEMAIN
 parse("avant-hier") ->
-	Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+	Now_seconds = calendar:datetime_to_gregorian_seconds(get_time()),
 	Total = Now_seconds - 3600*24*2 ,
 	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
 	{Annee, Mois, Jour};
 
 parse("hier") ->
-	Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+	Now_seconds = calendar:datetime_to_gregorian_seconds(get_time()),
 	Total = Now_seconds - 3600*24,
 	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
 	{Annee, Mois, Jour};
@@ -72,13 +83,13 @@ parse("aujourd'hui") ->
 	date();
 
 parse("demain") ->
-	Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+	Now_seconds = calendar:datetime_to_gregorian_seconds(get_time()),
 	Total = Now_seconds + 3600*24,
 	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
 	{Annee, Mois, Jour};
 
 parse("apres-demain") ->
-	Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+	Now_seconds = calendar:datetime_to_gregorian_seconds(get_time()),
 	Total = Now_seconds + 3600*24*2,
 	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
 	{Annee, Mois, Jour};
@@ -86,7 +97,7 @@ parse("apres-demain") ->
 parse(Jour_saisie) when is_list(Jour_saisie) -> 
 	Numero_jour = is_in_Tuple(?Liste_jours, Jour_saisie),
 	if  Numero_jour =/= 0 -> % si le jour existe
-			Local_time   = {{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+			Local_time   = {{Year, Month, Day}, {_,_,_}} = get_time(),
 			Now_seconds  = calendar:datetime_to_gregorian_seconds(Local_time),
 			Jour_courant = calendar:day_of_the_week(Year, Month, Day),
 			Total_jours = Numero_jour - Jour_courant, 
@@ -104,7 +115,7 @@ parse({"week-end", "dernier"}) ->
 
 % SEMAINE DERNIERE
 parse({"semaine", "derniere"}) -> 
-	Local_time    = {{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+	Local_time    = {{Year, Month, Day}, {_,_,_}} = get_time(),
 	Now_seconds   = calendar:datetime_to_gregorian_seconds(Local_time),
 	Jour_courant  = calendar:day_of_the_week(Year, Month, Day),
 	Fin_semaine   = 7 + (Jour_courant - 1) ,
@@ -114,14 +125,14 @@ parse({"semaine", "derniere"}) ->
 
 % L'ANNEE DERNIERE
 parse({"l'annee", "derniere"}) -> 
-	{{Year,_,_}, {_,_,_}} = calendar:local_time(),
+	{{Year,_,_}, {_,_,_}} = get_time(),
 	{Year - 1, 1, 1};
 
 % JOUR DERNIER
 parse({Jour_saisie, "dernier"}) ->
 	Numero_jour = is_in_Tuple(?Liste_jours, Jour_saisie),
 	if  Numero_jour =/= 0 -> % si le jour existe
-			Local_time   = {{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+			Local_time   = {{Year, Month, Day}, {_,_,_}} = get_time(),
 			Now_seconds  = calendar:datetime_to_gregorian_seconds(Local_time),
 			Jour_courant = calendar:day_of_the_week(Year, Month, Day),
 			if Numero_jour < Jour_courant -> 
@@ -140,7 +151,7 @@ parse({"week-end", "prochain"}) ->
 
 % SEMAINE PROCHAINE
 parse({"semaine", "prochaine"}) -> 
-	Local_time    = {{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+	Local_time    = {{Year, Month, Day}, {_,_,_}} = get_time(),
 	Now_seconds   = calendar:datetime_to_gregorian_seconds(Local_time),
 	Jour_courant  = calendar:day_of_the_week(Year, Month, Day),
 	Fin_semaine   = (7 - Jour_courant) + 1,
@@ -150,14 +161,14 @@ parse({"semaine", "prochaine"}) ->
 
 % L'ANNEE PROCHAINE
 parse({"l'annee", "prochaine"}) -> 
-	{{Year,_,_}, {_,_,_}} = calendar:local_time(),
+	{{Year,_,_}, {_,_,_}} = get_time(),
 	{Year + 1, 1, 1};
 
 % JOUR PROCHAIN
 parse({Jour_saisie, "prochain"}) ->
 	Numero_jour = is_in_Tuple(?Liste_jours, Jour_saisie),
 	if  Numero_jour =/= 0 -> % si le jour existe
-			Local_time   = {{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+			Local_time   = {{Year, Month, Day}, {_,_,_}} = get_time(),
 			Now_seconds  = calendar:datetime_to_gregorian_seconds(Local_time),
 			Jour_courant = calendar:day_of_the_week(Year, Month, Day),
 			if Numero_jour > Jour_courant -> 
@@ -180,7 +191,7 @@ parse({"le", Entier, Type}) ->
 			try list_to_integer(Entier) of
 				_ -> 
 					Duree = list_to_integer(Entier),
-					{{Year,_, Day}, {_,_,_}} = calendar:local_time(),
+					{{Year,_, Day}, {_,_,_}} = get_time(),
 					LastDay_month = calendar:last_day_of_the_month(Year, Numero_mois),
 					if (Duree < LastDay_month + 1) -> 
 						setelement(3, {Year, Numero_mois, Day}, Duree);
@@ -199,7 +210,7 @@ parse({"dans", Entier, Type}) when (Type =:= "jours" orelse Type =:= "jour") ->
 		_ -> 
 			Duree = list_to_integer(Entier),
 			if (?is_positif(Duree)) -> 
-				Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+				Now_seconds = calendar:datetime_to_gregorian_seconds(get_time()),
 				Total = 3600*24*Duree + Now_seconds,
 				{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
 				{Annee, Mois, Jour};
@@ -215,7 +226,7 @@ parse({"dans", Entier, "mois"}) ->
 		_ -> 
 			Duree = list_to_integer(Entier),
 			if (?is_positif(Duree)) ->
-				{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+				{{Year, Month, Day}, {_,_,_}} = get_time(),
 				Total = Duree + Month, 
 				if  Total > 12 -> {Year + (Total div 12), Total rem 12, Day};
 					true -> {Year, Duree + Month, Day}
@@ -232,7 +243,7 @@ parse({"dans", Entier, Type}) when (Type =:= "ans" orelse Type =:= "an") ->
 		_ -> 
 			Duree = list_to_integer(Entier),
 			if (?is_positif(Duree)) ->
-				{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+				{{Year, Month, Day}, {_,_,_}} = get_time(),
 				{Year + Duree, Month, Day};
 				true -> {error, not_a_unsigned_int}
 			end
@@ -248,7 +259,7 @@ parse({"ilya", Entier, Type}) when (Type =:= "jours" orelse Type =:= "jour") ->
 		_ -> 
 			Duree = list_to_integer(Entier),
 			if (?is_positif(Duree)) ->
-				Now_seconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+				Now_seconds = calendar:datetime_to_gregorian_seconds(get_time()),
 				Total = Now_seconds - 3600 * 24 * Duree,
 				{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
 				{Annee, Mois, Jour};
@@ -264,7 +275,7 @@ parse({"ilya", Entier, "mois"})  ->
 		_ -> 
 			Duree = list_to_integer(Entier),
 			if (?is_positif(Duree)) ->
-				{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+				{{Year, Month, Day}, {_,_,_}} = get_time(),
 				Total_Annee = Duree + Month, 
 				Total_Mois = positif(Month - Duree), 
 				if
@@ -284,7 +295,7 @@ parse({"ilya", Entier, Type}) when (Type =:= "ans" orelse Type =:= "an") ->
 		_ -> 
 			Duree = list_to_integer(Entier),
 			if (?is_positif(Duree)) ->
-				{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
+				{{Year, Month, Day}, {_,_,_}} = get_time(),
 				{Year - Duree, Month, Day};
 				true -> {error, not_a_unsigned_int}
 			end
