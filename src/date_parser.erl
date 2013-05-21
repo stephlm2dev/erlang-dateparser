@@ -1,15 +1,13 @@
 -module (date_parser).
 -author("Schmidely Stephane").
 -vsn(1.0).
--import (string, [tokens/2, concat/2, to_lower/1]).
 -export ([analyser/1]).
 
--define(is_num(X),   (X >= $0 andalso X =< $9)).
--define(is_positif(X), (X > 0)).
--define(is_year(X),  (?is_positif(X) andalso X > 31)).
--define(is_day(X),   (?is_positif(X) andalso X =< 31)).
--define(is_month(X), (?is_positif(X) andalso X =< 12)).
--define(is_string(X),(is_list(X))).
+-define(is_positif(X), (is_integer(X) andalso X > 0)).
+-define(Liste_jours, {"lundi", "mardi", "mercredi", "jeudi",
+					   "vendredi", "samedi","dimanche"}).
+-define(Liste_mois, {"janvier","fevrier","mars","avril","mai","juin","juillet",
+				  "aout","septembre","octobre","novembre","decembre"}).
 
 % @Brief Split the string and analyse each part of the elements
 % @Param query string
@@ -19,8 +17,8 @@
 %							FONCTION PRINCIPALE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-analyser(Date) when ?is_string(Date) ->
-	List_date = list_to_tuple(tokens(Date, " ")),
+analyser(Date) when is_list(Date) ->
+	List_date = list_to_tuple(string:tokens(Date, " ")),
 	case tuple_size(List_date) of
 		1 ->	% avant-hier
 			{Jour_saisie} = List_date,
@@ -36,7 +34,7 @@ analyser(Date) when ?is_string(Date) ->
 						_ -> parse({list_to_integer(Mot), string:to_lower(Entier), list_to_integer(Type)})
 					catch
 						error:badarg -> 
-							"Oops! Something went wrong, please try again"
+							{error,not_a_year}
 					end
 			catch
 				error:badarg ->
@@ -47,11 +45,11 @@ analyser(Date) when ?is_string(Date) ->
 			Mot = string:concat(Mot1, string:concat(Mot2, Mot3)),
 			parse({string:to_lower(Mot), string:to_lower(Entier), string:to_lower(Type)});
 		_ -> 
-			"Oops! Something went wrong, please try again"
+			{error, not_matching}
 	end;
 
 analyser(_) -> 
-	"Oops! Something went wrong, please try again".
+	{error, not_string}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %							FONCTIONS PARSE 
@@ -85,10 +83,8 @@ parse("apres-demain") ->
 	{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
 	{Annee, Mois, Jour};
 
-parse(Jour_saisie) when ?is_string(Jour_saisie) -> 
-	Liste_jours = {"lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi",
-				   "dimanche"},
-	Numero_jour = is_in_Tuple(Liste_jours, Jour_saisie),
+parse(Jour_saisie) when is_list(Jour_saisie) -> 
+	Numero_jour = is_in_Tuple(?Liste_jours, Jour_saisie),
 	if  Numero_jour =/= 0 -> % si le jour existe
 			Local_time   = {{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
 			Now_seconds  = calendar:datetime_to_gregorian_seconds(Local_time),
@@ -97,7 +93,7 @@ parse(Jour_saisie) when ?is_string(Jour_saisie) ->
 			Total_seconds = Now_seconds + (Total_jours * 24 * 3600),
 			{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total_seconds),
 			{Annee, Mois, Jour};
-		true -> "Oops! Something went wrong, please try again"
+		true -> {error, unknown_day}
 	end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -123,9 +119,7 @@ parse({"l'annee", "derniere"}) ->
 
 % JOUR DERNIER
 parse({Jour_saisie, "dernier"}) ->
-	Liste_jours = {"lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi",
-				   "dimanche"},
-	Numero_jour = is_in_Tuple(Liste_jours, Jour_saisie),
+	Numero_jour = is_in_Tuple(?Liste_jours, Jour_saisie),
 	if  Numero_jour =/= 0 -> % si le jour existe
 			Local_time   = {{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
 			Now_seconds  = calendar:datetime_to_gregorian_seconds(Local_time),
@@ -137,7 +131,7 @@ parse({Jour_saisie, "dernier"}) ->
 			Total_seconds = Now_seconds - (Total_jours * 24 * 3600),
 			{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total_seconds),
 			{Annee, Mois, Jour};
-		true -> "Oops! Something went wrong, please try again"
+		true -> {error, unknown_day}
 	end;
 
 % WEEK-END PROCHAIN
@@ -161,9 +155,7 @@ parse({"l'annee", "prochaine"}) ->
 
 % JOUR PROCHAIN
 parse({Jour_saisie, "prochain"}) ->
-	Liste_jours = {"lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi",
-				   "dimanche"},
-	Numero_jour = is_in_Tuple(Liste_jours, Jour_saisie),
+	Numero_jour = is_in_Tuple(?Liste_jours, Jour_saisie),
 	if  Numero_jour =/= 0 -> % si le jour existe
 			Local_time   = {{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
 			Now_seconds  = calendar:datetime_to_gregorian_seconds(Local_time),
@@ -175,17 +167,15 @@ parse({Jour_saisie, "prochain"}) ->
 			Total_seconds = Now_seconds + (Total_jours * 24 * 3600),
 			{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total_seconds),
 			{Annee, Mois, Jour};
-		true -> "Oops! Something went wrong, please try again"
+		true -> {error, unknown_day}
 	end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % LE X MOIS
 parse({"le", Entier, Type}) ->
-	Liste_mois = {"janvier","fevrier","mars","avril","mai","juin","juillet",
-				  "aout","septembre","octobre","novembre","decembre"},
-	Numero_mois = is_in_Tuple(Liste_mois, Type),
-	if (Numero_mois == 0) -> "Oops! Something went wrong, please try again";
+	Numero_mois = is_in_Tuple(?Liste_mois, Type),
+	if (Numero_mois == 0) -> {error, unknown_month};
 		true -> 
 			try list_to_integer(Entier) of
 				_ -> 
@@ -194,11 +184,10 @@ parse({"le", Entier, Type}) ->
 					LastDay_month = calendar:last_day_of_the_month(Year, Numero_mois),
 					if (Duree < LastDay_month + 1) -> 
 						setelement(3, {Year, Numero_mois, Day}, Duree);
-						true -> "Oops! Something went wrong, please try again"
+						true -> {error, invalid_day}
 					end
 			catch
-				error:badarg->
-					"Oops! Something went wrong, please try again"
+				error:badarg -> {error, not_day}
 			end
 	end;
 
@@ -214,12 +203,11 @@ parse({"dans", Entier, Type}) when (Type =:= "jours" orelse Type =:= "jour") ->
 				Total = 3600*24*Duree + Now_seconds,
 				{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
 				{Annee, Mois, Jour};
-				true -> "Oops! Something went wrong, please try again"
+				true -> {error, not_a_unsigned_int}
 			end
 	catch
-		error:badarg->
-			"Oops! Something went wrong, please try again"
-	end;	
+		error:badarg -> {error, not_integer}
+	end;
 
 % DANS X MOIS
 parse({"dans", Entier, "mois"}) -> 
@@ -232,12 +220,11 @@ parse({"dans", Entier, "mois"}) ->
 				if  Total > 12 -> {Year + (Total div 12), Total rem 12, Day};
 					true -> {Year, Duree + Month, Day}
 				end;
-				true -> "Oops! Something went wrong, please try again"
+				true -> {error, not_a_unsigned_int}
 			end
 	catch
-		error:badarg->
-			"Oops! Something went wrong, please try again"
-	end;
+		error:badarg -> {error, not_integer}
+	end;	
 
 % DANS X AN(S)
 parse({"dans", Entier, Type}) when (Type =:= "ans" orelse Type =:= "an") ->
@@ -247,12 +234,11 @@ parse({"dans", Entier, Type}) when (Type =:= "ans" orelse Type =:= "an") ->
 			if (?is_positif(Duree)) ->
 				{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
 				{Year + Duree, Month, Day};
-				true -> "Oops! Something went wrong, please try again"
+				true -> {error, not_a_unsigned_int}
 			end
 	catch
-		error:badarg->
-			"Oops! Something went wrong, please try again"
-	end;
+		error:badarg -> {error, not_integer}
+	end;	
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -266,11 +252,10 @@ parse({"ilya", Entier, Type}) when (Type =:= "jours" orelse Type =:= "jour") ->
 				Total = Now_seconds - 3600 * 24 * Duree,
 				{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
 				{Annee, Mois, Jour};
-				true -> "Oops! Something went wrong, please try again"
+				true -> {error, not_a_unsigned_int}
 			end
 	catch
-		error:badarg->
-			"Oops! Something went wrong, please try again"
+		error:badarg -> {error, not_integer}
 	end;
 
 % IL Y A X MOIS
@@ -287,12 +272,10 @@ parse({"ilya", Entier, "mois"})  ->
 					Duree > Month -> {Year - (Total_Annee div 12), Total_Mois rem 12, Day};
 					true -> {Year, Month - Duree, Day}
 				end;
-				
-				true -> "Oops! Something went wrong, please try again"
+			true -> {error, not_a_unsigned_int}
 			end
 	catch
-		error:badarg->
-			"Oops! Something went wrong, please try again"
+		error:badarg -> {error, not_integer}
 	end;
 
 % IL Y A X AN(S)
@@ -303,28 +286,26 @@ parse({"ilya", Entier, Type}) when (Type =:= "ans" orelse Type =:= "an") ->
 			if (?is_positif(Duree)) ->
 				{{Year, Month, Day}, {_,_,_}} = calendar:local_time(),
 				{Year - Duree, Month, Day};
-				true -> "Oops! Something went wrong, please try again"
+				true -> {error, not_a_unsigned_int}
 			end
 	catch
-		error:badarg->
-			"Oops! Something went wrong, please try again"
+		error:badarg -> {error, not_integer}
 	end;
 
-parse({Mot, Entier, Type}) when ?is_day(Mot) andalso ?is_year(Type) ->
-	Liste_mois = {"janvier","fevrier","mars","avril","mai","juin","juillet",
-				  "aout","septembre","octobre","novembre","decembre"},
-	Numero_mois = is_in_Tuple(Liste_mois, Entier),
+% 2 JUIN 2012 
+parse({Mot, Entier, Type}) when ?is_positif(Mot) andalso Mot =< 31 andalso ?is_positif(Type) andalso Type > 31 ->
+	Numero_mois = is_in_Tuple(?Liste_mois, Entier),
 	if (Numero_mois =/= 0) -> 
 		LastDay_month = calendar:last_day_of_the_month(Type, Numero_mois),
 		if (Mot < LastDay_month + 1) -> 
 			{Type, Numero_mois, Mot};
-			true -> "Oops! Something went wrong, please try again"
+			true -> {error, invalid_day}
 		end;
-		true -> "Oops! Something went wrong, please try again"
+		true -> {error, unknown_month}
 	end;
 
-parse(_) -> 
-	"Oops! Something went wrong, please try again".
+parse(_) ->
+	{error, not_matching}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %							FONCTIONS ANNEXES 
