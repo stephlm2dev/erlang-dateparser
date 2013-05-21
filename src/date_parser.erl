@@ -1,6 +1,13 @@
 -module (date_parser).
 -author("Schmidely Stephane").
 -vsn(1.0).
+<<<<<<< HEAD
+=======
+
+-export([start/2, stop/1]).
+-behaviour (application).
+
+>>>>>>> 2849fd80b0608bddb4cdcc3a82b4e5aca6d5cbca
 -export ([analyser/1]).
 -export([start/2, stop/1]).
 -behaviour (application).
@@ -28,7 +35,11 @@
 start(_StartType, _StartArgs) -> ok.
 stop(_State)-> ok.
 
+<<<<<<< HEAD
 analyser(Date) when is_list(Date) ->
+=======
+analyser(Date) when ?is_string(Date) ->
+>>>>>>> 2849fd80b0608bddb4cdcc3a82b4e5aca6d5cbca
 	List_date = list_to_tuple(string:tokens(Date, " ")),
 	case tuple_size(List_date) of
 		1 ->	% avant-hier
