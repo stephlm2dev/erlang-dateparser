@@ -19,14 +19,6 @@ Gère actuellement :
 ### Compilation
 1> c(date_parser).
 ### Requête
-2> date_parser:analyser("your_search_between_quotes").
+2> date_parser:analyser("your_search_between_quotes", LIST).
 ### Valeur de retour 
-{Annee, Mois, Jour}
-
-## Exemple d'utilisation 
-
-1> c(date_parser).   
-2> date_parser:analyser("dans 5 jours").   
-{2013, 5, 19}   
-3>   
-
+[list_analyzed,{date,{Annee, Mois, Jour}}]
