@@ -4,12 +4,7 @@
 -export ([analyser/2]).
 -export([start/2, stop/1]).
 -behaviour (application).
-
--define(is_positif(X), (is_integer(X) andalso X > 0)).
--define(Liste_jours, {"lundi", "mardi", "mercredi", "jeudi",
-					   "vendredi", "samedi","dimanche"}).
--define(Liste_mois, {"janvier","fevrier","mars","avril","mai","juin","juillet",
-				  "aout","septembre","octobre","novembre","decembre"}).
+-include("date_parser.hrl").
 
 -ifdef(TEST).
 	get_time() -> {{2013, 5, 14}, {0,0,0}}. % pour les tests unitaires
