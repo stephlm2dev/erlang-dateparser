@@ -4,7 +4,7 @@
 -export ([analyser/2]).
 -export([start/2, stop/1]).
 -behaviour (application).
--include("date_parser.hrl").
+-include("../include/date_parser.hrl").
 
 -ifdef(TEST).
 	get_time() -> {{2013, 5, 14}, {0,0,0}}. % pour les tests unitaires
