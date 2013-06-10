@@ -216,6 +216,22 @@ parse({"dans", Entier, Type, Analyzed}) when (Type =:= "jours" orelse Type =:= "
 		error:badarg -> {error, not_integer}
 	end;
 
+% DANS X SEMAINE(S) 
+parse({"dans", Entier, Type, Analyzed}) when (Type =:= "semaines" orelse Type =:= "semaine") ->
+	try list_to_integer(Entier) of
+		_ -> 
+			Duree = list_to_integer(Entier),
+			if (?is_positif(Duree)) -> 
+				Now_seconds = calendar:datetime_to_gregorian_seconds(get_time()),
+				Total = 3600*24*7*Duree + Now_seconds,
+				{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
+				lists:append(Analyzed, [{date, {Annee, Mois, Jour}}]);
+				true -> {error, not_a_unsigned_int}
+			end
+	catch
+		error:badarg -> {error, not_integer}
+	end;
+
 % DANS X MOIS
 parse({"dans", Entier, "mois", Analyzed}) -> 
 	try list_to_integer(Entier) of
@@ -257,6 +273,22 @@ parse({"ilya", Entier, Type, Analyzed}) when (Type =:= "jours" orelse Type =:= "
 			if (?is_positif(Duree)) ->
 				Now_seconds = calendar:datetime_to_gregorian_seconds(get_time()),
 				Total = Now_seconds - 3600 * 24 * Duree,
+				{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
+				lists:append(Analyzed, [{date, {Annee, Mois, Jour}}]);
+				true -> {error, not_a_unsigned_int}
+			end
+	catch
+		error:badarg -> {error, not_integer}
+	end;
+
+% IL Y A X SEMAINES(S)
+parse({"ilya", Entier, Type, Analyzed}) when (Type =:= "semaines" orelse Type =:= "semaine") ->
+	try list_to_integer(Entier) of
+		_ -> 
+			Duree = list_to_integer(Entier),
+			if (?is_positif(Duree)) ->
+				Now_seconds = calendar:datetime_to_gregorian_seconds(get_time()),
+				Total = Now_seconds - 3600 * 24 * 7 * Duree,
 				{{Annee, Mois, Jour}, {_,_,_}} = calendar:gregorian_seconds_to_datetime(Total),
 				lists:append(Analyzed, [{date, {Annee, Mois, Jour}}]);
 				true -> {error, not_a_unsigned_int}
